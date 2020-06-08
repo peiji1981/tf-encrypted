@@ -1,7 +1,7 @@
 """Installing with setuptools."""
 import setuptools
 
-with open("README.md", "r") as fh:
+with open("README.md", "r", encoding="utf8") as fh:
   long_description = fh.read()
 
 setuptools.setup(
@@ -12,11 +12,12 @@ setuptools.setup(
         'operations/secure_random/*.so',
         'convert/*.yaml',
     ]},
-    python_requires=">=3.5",
+    python_requires=">=3.6",
     install_requires=[
         "tensorflow >=1.12.0, <2",
         "numpy >=1.14.0",
         "pyyaml >=5.1",
+        "tf-big ~=0.1.0",
     ],
     extras_require={
         "tf": ["tensorflow>=1.12.0,<2"],

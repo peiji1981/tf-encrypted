@@ -11,7 +11,7 @@ See below for more [background material](#background--further-reading), explore 
 TF Encrypted is available as a package on [PyPI](https://pypi.org/project/tf-encrypted/) supporting Python 3.5+ and TensorFlow 1.12.0+:
 
 ```bash
-pip3 install tf-encrypted
+pip install tf-encrypted
 ```
 Creating a conda environment to run TF Encrypted code can be done using:
 ```
@@ -26,7 +26,8 @@ Alternatively, installing from source can be done using:
 ```bash
 git clone https://github.com/tf-encrypted/tf-encrypted.git
 cd tf-encrypted
-pip3 install -e .
+pip install -e .
+make build
 ```
 
 This latter is useful on platforms for which the pip package has not yet been compiled but is also needed for [development](./docs/CONTRIBUTING.md). Note that this will get you a working basic installation, yet a few more steps are required to match the performance and security of the version shipped in the pip package, see the [installation instructions](./docs/INSTALL.md).
@@ -74,39 +75,49 @@ For more information, check out the [documentation](./docs/) or the [examples](.
 
 # Background & Further Reading
 
-Overview and background:
+Blog posts:
+
+- [Introducing TF Encrypted](https://alibaba-gemini-lab.github.io/docs/blog/tfe/) walks through a simple example showing two data owners jointly training a logistic regression model using TF Encrypted on a vertically split dataset (*by Alibaba Gemini Lab*)
+
+- [Federated Learning with Secure Aggregation in TensorFlow](https://medium.com/dropoutlabs/federated-learning-with-secure-aggregation-in-tensorflow-95f2f96ebecd) demonstrates using TF Encrypted for secure aggregation of federated learning in pure TensorFlow (*by Justin Patriquin at Cape Privacy*)
+
+- [Encrypted Deep Learning Training and Predictions with TF Encrypted Keras](https://medium.com/dropoutlabs/encrypted-deep-learning-training-and-predictions-with-tf-encrypted-keras-557193284f44) introduces and illustrates first parts of our encrypted Keras interface (*by Yann Dupis at Cape Privacy*)
 
 - [Growing TF Encrypted](https://medium.com/dropoutlabs/growing-tf-encrypted-a1cb7b109ab5) outlines the roadmap and motivates TF Encrypted as a community project (*by Morten Dahl*)
 
-- [Private Machine Learning in TensorFlow using Secure Computation](https://arxiv.org/abs/1810.08130) further elaborates on the benefits of the approach, outlines the adaptation of a secure computation protocol, and reports on concrete performance numbers (*by Morten Dahl, Jason Mancuso, Yann Dupis, et al. at Dropout Labs*)
+- [Experimenting with TF Encrypted](https://medium.com/dropoutlabs/experimenting-with-tf-encrypted-fe37977ff03c) walks through a simple example of turning an existing TensorFlow prediction model private (*by Morten Dahl and Jason Mancuso at Cape Privacy*)
 
 - [Secure Computations as Dataflow Programs](https://mortendahl.github.io/2018/03/01/secure-computation-as-dataflow-programs/) describes the initial motivation and implementation (*by Morten Dahl*)
 
-Examples and uses:
+Papers:
 
-- [Federated Learning with Secure Aggregation in TensorFlow](https://medium.com/dropoutlabs/federated-learning-with-secure-aggregation-in-tensorflow-95f2f96ebecd) demonstrates using TF Encrypted for secure aggregation of federated learning in pure TensorFlow (*by Justin Patriquin at Dropout Labs*)
+- [Privacy-Preserving Collaborative Machine Learning on Genomic Data using TensorFlow](https://arxiv.org/abs/2002.04344) outlines the [iDASH'19](http://www.humangenomeprivacy.org/2019/) winning solution built on TF Encrypted (*by Cheng Hong, et al.*)
 
 - [Crypto-Oriented Neural Architecture Design](https://arxiv.org/abs/1911.12322) uses TF Encrypted to benchmark ML optimizations made to better support the encrypted domain (*by Avital Shafran, Gil Segev, Shmuel Peleg, and Yedid Hoshen*)
 
-- [Encrypted Deep Learning Training and Predictions with TF Encrypted Keras](https://medium.com/dropoutlabs/encrypted-deep-learning-training-and-predictions-with-tf-encrypted-keras-557193284f44) introduces and illustrates first parts of our encrypted Keras interface (*by Yann Dupis at Dropout Labs*)
-
-- [Experimenting with TF Encrypted](https://medium.com/dropoutlabs/experimenting-with-tf-encrypted-fe37977ff03c) walks through a simple example of turning an existing TensorFlow prediction model private (*by Morten Dahl and Jason Mancuso at Dropout Labs*)
+- [Private Machine Learning in TensorFlow using Secure Computation](https://arxiv.org/abs/1810.08130) further elaborates on the benefits of the approach, outlines the adaptation of a secure computation protocol, and reports on concrete performance numbers (*by Morten Dahl, Jason Mancuso, Yann Dupis, et al.*)
 
 Presentations:
 
-- [Privacy-Preserving Machine Learning with TensorFlow](https://github.com/dropoutlabs/tf-world-tutorial), TF World 2019 (*by Jason Mancuso and Yann Dupis at Dropout Labs*)
+- [Privacy-Preserving Machine Learning with TensorFlow](https://github.com/capeprivacy/tf-world-tutorial), TF World 2019 (*by Jason Mancuso and Yann Dupis at Cape Privacy*); see also the [slides](https://github.com/capeprivacy/tf-world-tutorial/blob/master/TensorFlow-World-Tutorial-2019-final.pdf)
 
-- [Privacy-Preserving Machine Learning in TensorFlow with TF Encrypted](https://conferences.oreilly.com/artificial-intelligence/ai-ny-2019/public/schedule/detail/76542), O'Reilly AI 2019 (*by Morten Dahl at Dropout Labs*)
+- [Privacy-Preserving Machine Learning in TensorFlow with TF Encrypted](https://conferences.oreilly.com/artificial-intelligence/ai-ny-2019/public/schedule/detail/76542), O'Reilly AI 2019 (*by Morten Dahl at Cape Privacy*); see also the [slides](https://github.com/mortendahl/talks/blob/master/OReillyAI19-slides.pdf)
 
 Other:
 
 - [Privacy Preserving Deep Learning – PySyft Versus TF Encrypted](https://blog.exxactcorp.com/privacy-preserving-deep-learning-pysyft-tfencrypted/) makes a quick comparison between PySyft and TF Encrypted, correctly hitting on our goal of being the encryption backend in PySyft for TensorFlow (*by Exxact*)
 
-- [Bridging Microsoft SEAL into TensorFlow](https://medium.com/dropoutlabs/bridging-microsoft-seal-into-tensorflow-b04cc2761ad4) takes a first step towards integrating the Microsoft SEAL homomorphic encryption library and some of the technical challenges involved (*by Justin Patriquin at Dropout Labs*)
+- [Bridging Microsoft SEAL into TensorFlow](https://medium.com/dropoutlabs/bridging-microsoft-seal-into-tensorflow-b04cc2761ad4) takes a first step towards integrating the Microsoft SEAL homomorphic encryption library and some of the technical challenges involved (*by Justin Patriquin at Cape Privacy*)
 
-# Contributing
+# Development and Contribution
 
-Check out our [contribution guide](./docs/CONTRIBUTING.md) for more information, and don't hesitate to send a pull request, open an issue, or ask for help! You can do so either via [GitHub](https://github.com/tf-encrypted/tf-encrypted) or by [joining](https://join.slack.com/t/tf-encrypted/shared_invite/enQtNjI5NjY5NTc0NjczLWM4MTVjOGVmNGFkMWU2MGEzM2Q5ZWFjMTdmZjdmMTM2ZTU4YjJmNTVjYmE1NDAwMDIzMjllZjJjMWNiMTlmZTQ) our [Slack channel](https://tf-encrypted.slack.com). We use [ZenHub](https://www.zenhub.com/extension) to plan and track GitHub issues and pull requests.
+TF Encrypted is open source community project developed under the Apache 2 license and maintained by a set of core developers. We welcome contributions from all individuals and organizations, with further information available in our [contribution guide](./docs/CONTRIBUTING.md). We invite any organizations interested in [partnering](#organizational-contributions) with us to reach out via [email](mailto:contact@tf-encrypted.io) or [Slack](https://join.slack.com/t/tf-encrypted/shared_invite/enQtNjI5NjY5NTc0NjczLWM4MTVjOGVmNGFkMWU2MGEzM2Q5ZWFjMTdmZjdmMTM2ZTU4YjJmNTVjYmE1NDAwMDIzMjllZjJjMWNiMTlmZTQ).
+
+Don't hesitate to send a pull request, open an issue, or ask for help! You can do so either via [GitHub](https://github.com/tf-encrypted/tf-encrypted) or in our [Slack channel](https://join.slack.com/t/tf-encrypted/shared_invite/enQtNjI5NjY5NTc0NjczLWM4MTVjOGVmNGFkMWU2MGEzM2Q5ZWFjMTdmZjdmMTM2ZTU4YjJmNTVjYmE1NDAwMDIzMjllZjJjMWNiMTlmZTQ). We use [ZenHub](https://www.zenhub.com/extension) to plan and track GitHub issues and pull requests.
+
+## Individual contributions
+
+We appreciate the efforts of [all contributors](https://github.com/tf-encrypted/tf-encrypted/graphs/contributors) that have helped make TF Encrypted what it is! Below is a small selection of these, generated by [sourcerer.io](https://sourcerer.io/) from most recent stats:
 
 [![](https://sourcerer.io/fame/mortendahl/tf-encrypted/tf-encrypted/images/0)](https://sourcerer.io/fame/mortendahl/tf-encrypted/tf-encrypted/links/0)[![](https://sourcerer.io/fame/mortendahl/tf-encrypted/tf-encrypted/images/1)](https://sourcerer.io/fame/mortendahl/tf-encrypted/tf-encrypted/links/1)[![](https://sourcerer.io/fame/mortendahl/tf-encrypted/tf-encrypted/images/2)](https://sourcerer.io/fame/mortendahl/tf-encrypted/tf-encrypted/links/2)[![](https://sourcerer.io/fame/mortendahl/tf-encrypted/tf-encrypted/images/3)](https://sourcerer.io/fame/mortendahl/tf-encrypted/tf-encrypted/links/3)[![](https://sourcerer.io/fame/mortendahl/tf-encrypted/tf-encrypted/images/4)](https://sourcerer.io/fame/mortendahl/tf-encrypted/tf-encrypted/links/4)[![](https://sourcerer.io/fame/mortendahl/tf-encrypted/tf-encrypted/images/5)](https://sourcerer.io/fame/mortendahl/tf-encrypted/tf-encrypted/links/5)[![](https://sourcerer.io/fame/mortendahl/tf-encrypted/tf-encrypted/images/6)](https://sourcerer.io/fame/mortendahl/tf-encrypted/tf-encrypted/links/6)[![](https://sourcerer.io/fame/mortendahl/tf-encrypted/tf-encrypted/images/7)](https://sourcerer.io/fame/mortendahl/tf-encrypted/tf-encrypted/links/7)
 
@@ -116,7 +127,7 @@ We are very grateful for the significant contributions made by the following org
 
 <table>
     <tr>
-        <td><a href="https://dropoutlabs.com/"><img src="https://raw.githubusercontent.com/tf-encrypted/assets/master/other/dropoutlabs-logo.png" alt="Dropout Labs" width="150"/></a></td>
+        <td><a href="https://capeprivacy.com/"><img src="https://raw.githubusercontent.com/tf-encrypted/assets/master/other/capeprivacy-logo.png" alt="Cape Privacy" width="150"/></a></td>
         <td><a href="https://www.alibabagroup.com/"><img src="https://raw.githubusercontent.com/tf-encrypted/assets/master/other/alibaba-logo.png" alt="Alibaba Security Group" width="150"/></a></td>
         <td><a href="https://openmined.org/"><img src="https://raw.githubusercontent.com/tf-encrypted/assets/master/other/openmined-logo.png" alt="OpenMined" width="150"/></a></td>
     </tr>

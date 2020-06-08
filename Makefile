@@ -10,7 +10,7 @@ all: test
 # Rules for bootstrapping the Makefile such as checking for docker, python versions, etc.
 # ###############################################
 DOCKER_REQUIRED_VERSION=18.
-PYTHON_REQUIRED_VERSION=3.5.
+PYTHON_REQUIRED_VERSION=3.6.
 SHELL := /bin/bash
 
 CURRENT_DIR=$(shell pwd)
@@ -59,27 +59,21 @@ bootstrap: pythoncheck pipcheck
 # Rules for running our tests and for running various different linters
 # ###############################################
 test: pythoncheck
-	pytest -n 8 -x -m "not slow and not convert_maxpool"
-	pytest -n 8 -x -m slow
-	pytest -n 8 -x -m convert_maxpool
+	pytest -n 8 -x -m "not slow and not convert_maxpool" tf_encrypted
+	pytest -n 8 -x -m "slow" tf_encrypted
+	pytest -n 8 -x -m "convert_maxpool" tf_encrypted
 
-CONVERT_DIR=tf_encrypted/convert
-BUILD_RESERVED_SCOPES=$(CONVERT_DIR)/specops.yaml
-$(BUILD_RESERVED_SCOPES): pythoncheck
-	python -m tf_encrypted.convert.gen.generate_reserved_scopes
+lint: pythoncheck
+	flake8 tf_encrypted primitives operations examples
 
-BUILD_CONVERTER_README=$(CONVERT_DIR)/gen/readme_template.md
-$(BUILD_CONVERTER_README): $(BUILD_RESERVED_SCOPES) pythoncheck
-	python -m tf_encrypted.convert.gen.generate_reserved_scopes
-
-lint: $(BUILD_CONVERTER_README) pythoncheck
-	pylint tf_encrypted examples operations
-	pylint bin/run bin/process bin/pull_model bin/serve bin/write
+fmt: pythoncheck
+	isort --atomic --recursive tf_encrypted primitives operations examples
+	black tf_encrypted primitives operations examples
 
 typecheck: pythoncheck
 	MYPYPATH=$(CURRENT_DIR):$(CURRENT_DIR)/stubs mypy tf_encrypted
 
-.PHONY: lint test typecheck
+.PHONY: lint fmt test typecheck
 
 # ##############################################
 # Documentation
@@ -95,10 +89,19 @@ SPHINX_BUILD_GOOGLE_DOCSTRINGS = sphinx-apidoc
 SPHINX_NAPOLEAN_BUILD_DIR = docs/source/gen
 SPHINX_PROJECT_DIR = tf_encrypted
 
+CONVERT_DIR=tf_encrypted/convert
+BUILD_RESERVED_SCOPES=$(CONVERT_DIR)/specops.yaml
+$(BUILD_RESERVED_SCOPES): pythoncheck
+	python -m tf_encrypted.convert.gen.generate_reserved_scopes
+
+BUILD_CONVERTER_README=$(CONVERT_DIR)/gen/readme_template.md
+$(BUILD_CONVERTER_README): $(BUILD_RESERVED_SCOPES) pythoncheck
+	python -m tf_encrypted.convert.gen.generate_reserved_scopes
+
 google-docstrings:
 	@$(SPHINX_BUILD_GOOGLE_DOCSTRINGS) -fMeET "$(SPHINX_PROJECT_DIR)" -o "$(SPHINX_NAPOLEAN_BUILD_DIR)"
 
-docs: google-docstrings
+docs: $(BUILD_CONVERTER_README) google-docstrings
 	@$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 .PHONY: docs
@@ -269,44 +272,36 @@ pypi-push: pypi-push-$(PUSHTYPE)
 
 push:
 	@echo "Attempting to build and push $(VERSION) with push type $(PUSHTYPE) - $(EXACT_TAG)"
-	make docker-push
+	# make docker-push
 	make pypi-push
 	@echo "Done building and pushing artifacts for $(VERSION)"
 
 .PHONY: push
 
 # ###############################################
-# libsodium and secure random custom op defines
+# libsodium
 # ###############################################
+
 LIBSODIUM_VER_TAG=1.0.17
 LIBSODIUM_DIR=build/libsodium-$(LIBSODIUM_VER_TAG)
-
-TF_CFLAGS=$(shell python -c 'import tensorflow as tf; print(" ".join(tf.sysconfig.get_compile_flags()))' 2>/dev/null)
-TF_LFLAGS=$(shell python -c 'import tensorflow as tf; print(" ".join(tf.sysconfig.get_link_flags()))' 2>/dev/null)
-PACKAGE_DIR=tf_encrypted/operations
-
-SODIUM_INSTALL = $(shell pwd)/build
-
-SECURE_OUT_PRE = $(PACKAGE_DIR)/secure_random/secure_random_module_tf_
-
-SECURE_IN = operations/secure_random/secure_random.cc
-SECURE_IN_H = operations/secure_random/generators.h
-LIBSODIUM_OUT = $(SODIUM_INSTALL)/lib/libsodium.a
-
-# ###############################################
-# Secure Random Shared Object
-#
-# Rules for building libsodium and the shared object for secure random.
-# ###############################################
+LIBSODIUM_INSTALL = $(shell pwd)/build
+LIBSODIUM_OUT = $(LIBSODIUM_INSTALL)/lib/libsodium.a
 
 $(LIBSODIUM_OUT):
 	curl -OL https://github.com/jedisct1/libsodium/archive/$(LIBSODIUM_VER_TAG).tar.gz
 	mkdir -p build
 	tar -xvf $(LIBSODIUM_VER_TAG).tar.gz -C build
 	cd $(LIBSODIUM_DIR) && ./autogen.sh && ./configure --disable-shared --enable-static \
-		--disable-debug --disable-dependency-tracking --with-pic --prefix=$(SODIUM_INSTALL)
+		--disable-debug --disable-dependency-tracking --with-pic --prefix=$(LIBSODIUM_INSTALL)
 	$(MAKE) -C $(LIBSODIUM_DIR)
 	$(MAKE) -C $(LIBSODIUM_DIR) install
+
+# ###############################################
+# Common TensorFlow flags for custom ops
+# ###############################################
+
+TF_CFLAGS=$(shell python -c 'import tensorflow as tf; print(" ".join(tf.sysconfig.get_compile_flags()))' 2>/dev/null)
+TF_LFLAGS=$(shell python -c 'import tensorflow as tf; print(" ".join(tf.sysconfig.get_link_flags()))' 2>/dev/null)
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
@@ -316,18 +311,31 @@ ifeq ($(UNAME_S),Darwin)
 	FINAL_TF_LFLAGS = $(word 1,$(TF_LFLAGS)) -ltensorflow_framework
 endif
 
+# ###############################################
+# Secure Random Shared Object
+#
+# Rules for the shared object for secure random.
+# ###############################################
+
+SECURE_OUT_PRE = tf_encrypted/operations/secure_random/secure_random_module_tf_
+SECURE_IN = operations/secure_random/secure_random.cc
+SECURE_IN_H = operations/secure_random/generators.h
+
 $(SECURE_OUT_PRE)$(CURRENT_TF_VERSION).so: $(LIBSODIUM_OUT) $(SECURE_IN) $(SECURE_IN_H)
-	mkdir -p $(PACKAGE_DIR)/secure_random
+	mkdir -p tf_encrypted/operations/secure_random
 
 	g++ -std=c++11 -shared $(SECURE_IN) -o $(SECURE_OUT_PRE)$(CURRENT_TF_VERSION).so \
-		-fPIC $(TF_CFLAGS) $(FINAL_TF_LFLAGS) -O2 -I$(SODIUM_INSTALL)/include -L$(SODIUM_INSTALL)/lib -lsodium
+		-fPIC $(TF_CFLAGS) $(FINAL_TF_LFLAGS) -O2 -I$(LIBSODIUM_INSTALL)/include -L$(LIBSODIUM_INSTALL)/lib -lsodium
+
+# ###############################################
+# Build
+# ###############################################
 
 build: $(SECURE_OUT_PRE)$(CURRENT_TF_VERSION).so
 
 build-all:
-	pip install tensorflow==1.13.1
-	$(MAKE) $(SECURE_OUT_PRE)1.13.1.so
-
+	pip install tensorflow==1.15.2
+	$(MAKE) $(SECURE_OUT_PRE)1.15.2.so
 
 .PHONY: build build-all
 
