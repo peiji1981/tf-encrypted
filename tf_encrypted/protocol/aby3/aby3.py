@@ -34,6 +34,7 @@ from ...tensor.helpers import inverse
 from ...tensor.native import native_factory
 from ..protocol import Protocol
 from ..protocol import memoize
+from . import aby3_fp
 
 TFEInputter = Callable[[], Union[List[tf.Tensor], tf.Tensor]]
 TF_NATIVE_TYPES = [tf.bool, tf.int8, tf.int16, tf.int32, tf.int64]
@@ -1009,13 +1010,19 @@ class ABY3(Protocol):
         x, y = self.lift(x, y)
         return self.dispatch("matmul", x, y)
 
-    def gather_bit(self, x, even):
-        assert x.share_type is BOOLEAN
-        return self.dispatch("gather_bit", x, even)
+    def fp_sqrt(self, x):
+        """
+        compute sqrt(x) with a resonsable small approximation error.
+        """
+        x = self.lift(x)
+        return self.dispatch("fp_sqrt", x, container=aby3_fp)
 
-    def xor_indices(self, x):
-        assert x.share_type is BOOLEAN
-        return self.dispatch("xor_indices", x)
+    def fp_sqrt_inv(self, x):
+        """
+        compute 1./sqrt(x) with a resonsable small approximation error.
+        """
+        x = self.lift(x)
+        return self.dispatch("fp_sqrt_inv", x, container=aby3_fp)
 
     @memoize
     def transpose(self, x, perm=None):

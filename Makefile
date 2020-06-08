@@ -328,14 +328,30 @@ $(SECURE_OUT_PRE)$(CURRENT_TF_VERSION).so: $(LIBSODIUM_OUT) $(SECURE_IN) $(SECUR
 		-fPIC $(TF_CFLAGS) $(FINAL_TF_LFLAGS) -O2 -I$(LIBSODIUM_INSTALL)/include -L$(LIBSODIUM_INSTALL)/lib -lsodium
 
 # ###############################################
+# ABY3-fixed-point Shared Object
+#
+# Rules for the shared object for aby3-fixed-point.
+# ###############################################
+
+ABY3_FP_OUT_PRE = tf_encrypted/operations/aby3_fixed_point/aby3_fp_module_tf_
+ABY3_FP_IN = operations/aby3_fixed_point/*.cc
+
+$(ABY3_FP_OUT_PRE)$(CURRENT_TF_VERSION).so: $(LIBSODIUM_OUT) $(ABY3_FP_IN) 
+	mkdir -p tf_encrypted/operations/aby3_fixed_point/
+
+	g++ -std=c++11 -shared $(ABY3_FP_IN) -o $(ABY3_FP_OUT_PRE)$(CURRENT_TF_VERSION).so \
+		-fPIC $(TF_CFLAGS) $(FINAL_TF_LFLAGS) -O2 
+
+# ###############################################
 # Build
 # ###############################################
 
-build: $(SECURE_OUT_PRE)$(CURRENT_TF_VERSION).so
+build: $(SECURE_OUT_PRE)$(CURRENT_TF_VERSION).so $(ABY3_FP_OUT_PRE)$(CURRENT_TF_VERSION).so
 
 build-all:
 	pip install tensorflow==1.15.2
 	$(MAKE) $(SECURE_OUT_PRE)1.15.2.so
+	$(MAKE) $(ABY3_FP_OUT_PRE)1.15.2.so
 
 .PHONY: build build-all
 

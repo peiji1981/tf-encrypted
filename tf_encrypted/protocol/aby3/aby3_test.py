@@ -1001,6 +1001,32 @@ class TestABY3(unittest.TestCase):
                 result, np.array([[2.6, 2.6], [2.6, 2.6]]), rtol=0.0, atol=0.01
             )
 
+    def test_fp_sqrt_private(self):
+        tf.reset_default_graph()
+
+        prot = ABY3()
+        tfe.set_protocol(prot)
+        r = np.random.rand(16) * 100 # random in [0, 100)
+
+        # define inputs
+        x = tfe.define_private_input("input-provider", lambda: tf.constant(r))
+
+        # define computation
+        sqrt_x = prot.fp_sqrt(x).reveal()
+        sqrt_inv_x = prot.fp_sqrt_inv(x).reveal()
+
+        with tfe.Session() as sess:
+            # initialize variables
+            sess.run(tfe.global_variables_initializer())
+            # reveal result
+            sqrt_x, sqrt_inv_x = sess.run([sqrt_x, sqrt_inv_x], tag="fp_sqrt")
+            np.testing.assert_allclose(
+                sqrt_x, np.sqrt(r), rtol=0.03, atol=0.05
+            )
+            np.testing.assert_allclose(
+                sqrt_inv_x, 1./np.sqrt(r), rtol=0.03, atol=0.05
+            )
+
     def test_write_private(self):
         tf.reset_default_graph()
 
