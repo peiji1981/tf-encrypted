@@ -98,8 +98,8 @@ class DataOwner:
     def provide_training_data(self):
         """Preprocess training dataset
 
-    Return single batch of training dataset
-    """
+           Return single batch of training dataset
+        """
 
         def norm(x, y):
             return tf.cast(x, tf.float32), tf.expand_dims(y, 0)
@@ -131,8 +131,8 @@ class DataOwner:
     def provide_testing_data(self):
         """Preprocess testing dataset
 
-    Return single batch of testing dataset
-    """
+           Return single batch of testing dataset
+        """
 
         def norm(x, y):
             return tf.cast(x, tf.float32), tf.expand_dims(y, 0)
@@ -158,6 +158,9 @@ class DataOwner:
 
         return x, y
 
+    @property
+    def field_num(self):
+        return len(self.field_types)
 
 class ModelOwner:
     """Contains code meant to be executed by a model owner Player."""
