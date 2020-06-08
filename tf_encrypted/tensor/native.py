@@ -16,6 +16,7 @@ import numpy as np
 import tensorflow as tf
 
 from ..operations import secure_random
+from ..operations import aby3_fixed_point as aby3_fp
 from .factory import AbstractConstant
 from .factory import AbstractFactory
 from .factory import AbstractPlaceholder
@@ -306,6 +307,21 @@ def native_factory(
             value = tf.matmul(x.value, y.value)
             if EXPLICIT_MODULUS is not None:
                 value %= EXPLICIT_MODULUS
+            return DenseTensor(value)
+
+        def bit_reverse(self):
+            assert(self.factory.nbits == 64, "bit_reverse works for native-64 only")
+            value = aby3_fp.i64_bit_reverse(self.value)
+            return DenseTensor(value)
+
+        def bit_gather(self, even: bool):
+            assert(self.factory.nbits == 64, "bit_gather works for native-64 only")
+            value = aby3_fp.i64_bit_gather(self.value, even)
+            return DenseTensor(value)
+
+        def xor_indices(self):
+            assert(self.factory.nbits == 64, "xor_indices works for native-64 only")
+            value = aby3_fp.i64_xor_indices(self.value)
             return DenseTensor(value)
 
         def im2col(self, h_filter, w_filter, padding, stride):
