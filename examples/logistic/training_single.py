@@ -1,30 +1,64 @@
-"""Private training on data from a single owner"""
+"""Private training on combined data from several data owners"""
 import tf_encrypted as tfe
-from common import DataOwner
-from common import LogisticRegression
-from common import ModelOwner
+import tensorflow as tf
+from common2 import DataOwner, ModelOwner, LogisticRegression, DataSchema
 
-num_features = 10
-training_set_size = 2000
-test_set_size = 100
+
+num_rows = 7000
+num_features = 32
+num_epoch = 10
 batch_size = 100
-num_batches = (training_set_size // batch_size) * 10
+num_batches = (num_rows // batch_size ) * num_epoch
+
+#who shall receive the output
+model_owner = ModelOwner('alice')
+
+data_schema0 = DataSchema([tf.float64]*16, [0.0]*16)
+data_schema1 = DataSchema([tf.int64]+[tf.float64]*16, [0]+[0.0]*16)
+data_owner_0 = DataOwner('alice',
+     'aliceTrainFile.csv',
+     data_schema0,
+     batch_size = batch_size)
+data_owner_1 = DataOwner('bob',
+     'bobTrainFileWithLabel.csv',
+     data_schema1,
+     batch_size = batch_size)
+
+tfe.set_protocol(tfe.protocol.Pond(
+  tfe.get_config().get_player(data_owner_0.player_name),
+  tfe.get_config().get_player(data_owner_1.player_name)
+))
+
+x_train_0 = tfe.define_private_input(
+        data_owner_0.player_name,
+        data_owner_0.provide_data
+          )
+x_train_1 = tfe.define_private_input(
+        data_owner_1.player_name,
+        data_owner_1.provide_data
+          )
+y_train = tfe.gather(x_train_1, 0, axis=1)
+y_train = tfe.reshape(y_train, [batch_size, 1])
+
+#Remove bob's first column (which is label)
+x_train_1 = tfe.strided_slice(x_train_1, [0,1], [x_train_1.shape[0],x_train_1.shape[1]], [1,1])
+
+x_train = tfe.concat([x_train_0, x_train_1], axis=1)
 
 model = LogisticRegression(num_features)
-model_owner = ModelOwner("model-owner")
-data_owner = DataOwner(
-    "data-owner", num_features, training_set_size, test_set_size, batch_size
-)
-
-x_train, y_train = data_owner.provide_training_data()
-x_test, y_test = data_owner.provide_testing_data()
-
 reveal_weights_op = model_owner.receive_weights(model.weights)
 
 with tfe.Session() as sess:
-    sess.run([tfe.global_variables_initializer(), data_owner.initializer], tag="init")
+    sess.run(tfe.global_variables_initializer(),tag='init')
 
     model.fit(sess, x_train, y_train, num_batches)
-    model.evaluate(sess, x_test, y_test, data_owner)
+    sess.run(reveal_weights_op, tag='reveal')
 
-    sess.run(reveal_weights_op, tag="reveal")
+# each evaluation results in nodes for a forward pass being added to the graph;
+# maybe there's some way to avoid this, even if it means only if the shapes match
+    model.evaluate(sess, x_train, y_train, data_owner_0)
+    model.evaluate(sess, x_train, y_train, data_owner_1)
+
+#    sess.run(reveal_weights_op, tag='reveal')
+
+

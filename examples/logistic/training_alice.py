@@ -1,7 +1,7 @@
 """Private training on combined data from several data owners"""
 import tf_encrypted as tfe
 import tensorflow as tf
-from common import DataOwner, ModelOwner, LogisticRegression, DataSchema
+from common2 import DataOwner, ModelOwner, LogisticRegression, DataSchema
 
 def main(server):
   
@@ -38,6 +38,7 @@ def main(server):
             data_owner_1.player_name,
             data_owner_1.provide_data
               )
+
   y_train = tfe.gather(x_train_1, 0, axis=1)
   y_train = tfe.reshape(y_train, [batch_size, 1])
 
@@ -52,7 +53,6 @@ def main(server):
   with tfe.Session() as sess:
     sess.run(tfe.global_variables_initializer(),
              tag='init')
-
     model.fit(sess, x_train, y_train, num_batches)
     # TODO(Morten)
     # each evaluation results in nodes for a forward pass being added to the graph;
